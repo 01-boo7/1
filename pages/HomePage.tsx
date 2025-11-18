@@ -27,7 +27,7 @@ const HomePage: React.FC<HomePageProps> = ({ products, isLoading, onAddToCart })
             تمرد، قوة، <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">وهوية</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed font-light">
-            اكتشف تشكيلة TAG الحصرية التي تجمع بين الأصالة والعصرية. صممت لتمنحك الثقة في كل خطوة.
+            اكتشف تشكيلة Prand Hima الحصرية التي تجمع بين الأصالة والعصرية. صممت لتمنحك الثقة في كل خطوة.
           </p>
           <div className="flex justify-center gap-4">
             <Link 

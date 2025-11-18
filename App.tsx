@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -13,6 +13,8 @@ import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import type { Product, CartItem } from './types';
 import { generateInitialProducts } from './services/geminiService';
+import { db } from './firebase';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -31,6 +33,7 @@ const App: React.FC = () => {
     return sessionStorage.getItem('isAdminAuthenticated') === 'true';
   });
 
+  // Initialize Cart from LocalStorage (Cart is still local for guests)
   useEffect(() => {
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
@@ -38,30 +41,54 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const fetchAndSetProducts = useCallback(async () => {
+  // Fetch Products from Firebase Firestore (Real-time)
+  useEffect(() => {
     setIsLoading(true);
-    try {
-      const storedProducts = localStorage.getItem('products');
-      if (storedProducts) {
-        setProducts(JSON.parse(storedProducts));
+    const unsubscribe = onSnapshot(collection(db, "products"), async (snapshot) => {
+      const productsData = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as Product));
+      
+      // If database is empty, seed it with initial data
+      if (productsData.length === 0) {
+         // Check a local flag to prevent infinite re-seeding loops in edge cases, 
+         // though checking db length is usually sufficient.
+         const hasSeeded = localStorage.getItem('firebase_seeded');
+         
+         if (!hasSeeded) {
+            console.log("Database empty. Seeding with initial products...");
+            try {
+                const initialProducts = await generateInitialProducts();
+                // Batch add to Firestore
+                for (const p of initialProducts) {
+                    const { id, ...data } = p;
+                    // We use setDoc with the ID from the generator to keep IDs clean (e.g., 'prod-1')
+                    // or we could use addDoc to let Firebase generate IDs.
+                    await setDoc(doc(db, "products", id), data);
+                }
+                localStorage.setItem('firebase_seeded', 'true');
+            } catch (err) {
+                console.error("Error seeding database:", err);
+                setIsLoading(false);
+            }
+         } else {
+             setIsLoading(false);
+         }
       } else {
-        const initialProducts = await generateInitialProducts();
-        setProducts(initialProducts);
-        localStorage.setItem('products', JSON.stringify(initialProducts));
-      }
-    } catch (error) {
-        console.error("Failed to load products:", error);
-    } finally {
+        setProducts(productsData);
         setIsLoading(false);
-    }
+      }
+    }, (error) => {
+        console.error("Firebase error:", error);
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    fetchAndSetProducts();
-  }, [fetchAndSetProducts]);
-
-  const updateLocalStorage = (key: string, data: any) => {
-    localStorage.setItem(key, JSON.stringify(data));
+  const updateLocalStorageCart = (data: any) => {
+    localStorage.setItem('cart', JSON.stringify(data));
   };
 
   const addToCart = (product: Product, quantity: number = 1) => {
@@ -75,7 +102,7 @@ const App: React.FC = () => {
       } else {
         updatedCart = [...prevCart, { ...product, quantity }];
       }
-      updateLocalStorage('cart', updatedCart);
+      updateLocalStorageCart(updatedCart);
       return updatedCart;
     });
   };
@@ -85,7 +112,7 @@ const App: React.FC = () => {
       const updatedCart = prevCart.map(item =>
         item.id === productId ? { ...item, quantity } : item
       ).filter(item => item.quantity > 0);
-      updateLocalStorage('cart', updatedCart);
+      updateLocalStorageCart(updatedCart);
       return updatedCart;
     });
   };
@@ -93,7 +120,7 @@ const App: React.FC = () => {
   const removeFromCart = (productId: string) => {
     setCart(prevCart => {
       const updatedCart = prevCart.filter(item => item.id !== productId);
-      updateLocalStorage('cart', updatedCart);
+      updateLocalStorageCart(updatedCart);
       return updatedCart;
     });
   };
@@ -103,28 +130,38 @@ const App: React.FC = () => {
     localStorage.removeItem('cart');
   };
 
-  const addProduct = (productData: Omit<Product, 'id'>) => {
-    const newProduct: Product = {
-      ...productData,
-      id: `prod-${Date.now()}`,
-      rating: Math.floor(Math.random() * 2) + 4,
-    };
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    updateLocalStorage('products', updatedProducts);
+  // Firebase Operations
+  const addProduct = async (productData: Omit<Product, 'id'>) => {
+    try {
+        // Add a new document with a generated id
+        await addDoc(collection(db, "products"), {
+            ...productData,
+            rating: Math.floor(Math.random() * 2) + 4, // Default random rating for new items
+        });
+    } catch (e) {
+        console.error("Error adding document: ", e);
+        alert("حدث خطأ أثناء إضافة المنتج");
+    }
   };
 
-  const updateProduct = (updatedProduct: Product) => {
-    const updatedProducts = products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
-    setProducts(updatedProducts);
-    updateLocalStorage('products', updatedProducts);
+  const updateProduct = async (updatedProduct: Product) => {
+    try {
+        const { id, ...data } = updatedProduct;
+        await updateDoc(doc(db, "products", id), data as any);
+    } catch (e) {
+        console.error("Error updating document: ", e);
+        alert("حدث خطأ أثناء تحديث المنتج");
+    }
   };
 
-  const deleteProduct = (id: string) => {
+  const deleteProduct = async (id: string) => {
     if (window.confirm('هل أنت متأكد من أنك تريد حذف هذا المنتج؟')) {
-      const updatedProducts = products.filter(p => p.id !== id);
-      setProducts(updatedProducts);
-      updateLocalStorage('products', updatedProducts);
+        try {
+            await deleteDoc(doc(db, "products", id));
+        } catch (e) {
+            console.error("Error deleting document: ", e);
+            alert("حدث خطأ أثناء حذف المنتج");
+        }
     }
   };
 

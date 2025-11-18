@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
           {/* Newsletter */}
           <div className="md:col-span-2 lg:col-span-1">
             <h4 className="text-lg font-bold text-white mb-6 relative inline-block after:content-[''] after:absolute after:-bottom-2 after:right-0 after:w-12 after:h-1 after:bg-amber-500">النشرة الإخبارية</h4>
-            <p className="text-gray-400 mb-6 text-sm leading-relaxed">كن أول من يعرف عن العروض، إطلاق المنتجات الجديدة والعروض الحصرية! انضم لعائلة TAG الآن.</p>
+            <p className="text-gray-400 mb-6 text-sm leading-relaxed">كن أول من يعرف عن العروض، إطلاق المنتجات الجديدة والعروض الحصرية! انضم لعائلة Prand Hima الآن.</p>
             <form className="flex relative">
               <input 
                 type="email" 
@@ -23,8 +23,8 @@ const Footer: React.FC = () => {
           
           {/* About */}
           <div>
-             <h4 className="text-lg font-bold text-white mb-6 relative inline-block after:content-[''] after:absolute after:-bottom-2 after:right-0 after:w-12 after:h-1 after:bg-amber-500">من هو TAG</h4>
-            <p className="text-gray-400 text-sm leading-relaxed">TAG علامة أزياء رجالية تجسد التمرد، القوة، والهوية الشرقية بلمسة فخامة عصرية. ليست مجرد ملابس، بل رسالة.</p>
+             <h4 className="text-lg font-bold text-white mb-6 relative inline-block after:content-[''] after:absolute after:-bottom-2 after:right-0 after:w-12 after:h-1 after:bg-amber-500">من هو Prand Hima</h4>
+            <p className="text-gray-400 text-sm leading-relaxed">Prand Hima علامة أزياء رجالية تجسد التمرد، القوة، والهوية الشرقية بلمسة فخامة عصرية. ليست مجرد ملابس، بل رسالة.</p>
           </div>
 
           {/* Contact */}

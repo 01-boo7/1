@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, setSearchQuery, cartItemCo
           {/* Logo Area */}
           <div className="flex items-center gap-12">
             <NavLink to="/" className="text-3xl font-bold text-black tracking-widest flex items-center gap-2 group">
-              <span className="border-2 border-black px-2 py-1 group-hover:border-amber-500 group-hover:text-amber-600 transition-all">TAG</span>
+              <span className="border-2 border-black px-2 py-1 group-hover:border-amber-500 group-hover:text-amber-600 transition-all uppercase">Prand Hima</span>
             </NavLink>
             
             {/* Desktop Nav */}
