@@ -1,9 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Product } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Access API Key safely for Vite environment (VITE_API_KEY)
+// We fallback to empty string to allow app initialization, specific calls will fail or use fallback data if key is missing.
+const apiKey = (import.meta as any).env?.VITE_API_KEY || '';
+
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
 export const generateInitialProducts = async (): Promise<Product[]> => {
+  // If no API key is present, skip the API call and return fallback data immediately
+  if (!apiKey) {
+      console.warn("VITE_API_KEY is missing. Using fallback data.");
+      return getFallbackProducts();
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -36,6 +46,11 @@ export const generateInitialProducts = async (): Promise<Product[]> => {
   } catch (error) {
     console.error("Error generating products with Gemini:", error);
     // Fallback to static data in case of API error
+    return getFallbackProducts();
+  }
+};
+
+const getFallbackProducts = (): Product[] => {
     return [
         { id: 'prod-1', name: 'تيشيرت كلاسيك', category: 'الرجال', price: 250, rating: 4, imageUrl: 'https://picsum.photos/seed/prod1/600/900', description: 'تيشيرت قطني 100% بتصميم بسيط وأنيق، مثالي للارتداء اليومي.' },
         { id: 'prod-2', name: 'فستان صيفي', category: 'النساء', price: 450, originalPrice: 550, rating: 5, imageUrl: 'https://picsum.photos/seed/prod2/600/900', description: 'فستان خفيف ومريح بنقشات زهور، مثالي لأيام الصيف الحارة.' },
@@ -46,5 +61,4 @@ export const generateInitialProducts = async (): Promise<Product[]> => {
         { id: 'prod-7', name: 'طقم ملابس أطفال', category: 'أطفال', price: 280, rating: 5, imageUrl: 'https://picsum.photos/seed/prod7/600/900', description: 'طقم متكامل للأطفال بتصميم مرح وألوان زاهية، مريح للعب والنشاط.' },
         { id: 'prod-8', name: 'تنورة قصيرة', category: 'النساء', price: 290, rating: 4, imageUrl: 'https://picsum.photos/seed/prod8/600/900', description: 'تنورة قصيرة بقصة عصرية، سهلة التنسيق مع مختلف الإطلالات.' },
     ];
-  }
-};
+}
