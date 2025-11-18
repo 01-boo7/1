@@ -1,0 +1,5 @@
+{
+  "name": "TAG Apparel Store",
+  "description": "A modern e-commerce web application for a clothing store, inspired by TAG clothing. It features a product catalog and an admin dashboard for managing products. The design is clean, responsive, and supports right-to-left languages.",
+  "requestFramePermissions": []
+}
